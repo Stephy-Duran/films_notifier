@@ -4,6 +4,7 @@ import os
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -80,6 +81,8 @@ def collect_movies(city):
 
 
 # Email sender Section Start
+load_dotenv()
+
 port = 465  # For SSL
 password = os.getenv("EMAIL_PASSWORD", "password")
 smtp_server = "smtp.gmail.com"
