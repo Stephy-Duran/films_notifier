@@ -1,5 +1,9 @@
 import smtplib
 import ssl
+import os
+
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -47,7 +51,8 @@ def collect_movies(city):
             break
 
     if not city_found:
-        print(f'ERROR: The city {city} is not in the list, please check if is a valid city')
+        print(f'ERROR: The city {
+              city} is not in the list, please check if is a valid city')
 
     # Accepts cookies
     wait_for_element(
@@ -75,10 +80,14 @@ def collect_movies(city):
 
 
 # Email sender Section Start
-port = 1025
-smtp_server = "localhost"  # or can use smtp.gmail.com
-sender_email = "sender@automation.com"
-receiver_email = "receiver@automation.com"
+port = 465  # For SSL
+password = os.getenv("EMAIL_PASSWORD", "password")
+smtp_server = "smtp.gmail.com"
+
+sender_email = "testmailcode016@gmail.com"
+receiver_email = "testmailcode016+receiver@gmail.com"
+
+context = ssl.create_default_context()
 
 
 def send_email(city, msg):
@@ -89,9 +98,43 @@ Subject: Movies available in {city}
 The movies available in {city} are:
 {msg}
 """.encode("utf-8")
-    with smtplib.SMTP(smtp_server, port) as server:
+
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login("testmailcode016@gmail.com", password)
         server.sendmail(sender_email, receiver_email, parsed_msg)
-        print(f"Email sent successfully to {receiver_email}")
+
+
+def send_mutliple_emails(targets):
+    ''' Send an email to multiple targets '''
+
+    plain_msg = """\
+Thank you for attending our event.
+
+If you have any questions, feel free to contact us."""
+
+    html_msg = """\
+<html>
+    <body>
+        <p>Thank you for attending our event.</p>
+        <p>If you have any questions, feel free to contact us.</p>
+    </body>
+</html>
+"""
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Send email to multiple targets and HTML"
+    message["From"] = sender_email
+    message["To"] = ", ".join(targets)
+
+    part1 = MIMEText(plain_msg, "plain")
+    part2 = MIMEText(html_msg, "html")
+
+    message.attach(part1)
+    message.attach(part2)
+
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login("testmailcode016@gmail.com", password)
+        server.sendmail(sender_email, targets, message.as_string())
 # Email sender Section End
 
 
@@ -99,3 +142,7 @@ if __name__ == "__main__":
     city = "Medellín"
     movies_txt = collect_movies(city)
     send_email(city, movies_txt)
+    driver.quit()
+
+    # target_emails = []
+    # send_mutliple_emails(target_emails)
